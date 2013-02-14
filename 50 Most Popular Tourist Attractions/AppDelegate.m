@@ -2,32 +2,88 @@
 //  AppDelegate.m
 //  50 Most Popular Tourist Attractions
 //
-//  Created by Umang Shah on 1/24/12.
-//  Copyright (c) 2012 NVIDIA. All rights reserved.
+//  Created by  on 1/24/12.
+//  Copyright (c) 2012 . All rights reserved.
 //
 
 #import "AppDelegate.h"
+#import "Database.h"
 
-#import "ViewController.h"
+#import "Splash_iphone.h"
+#import "Splash_ipad.h"
+
 
 @implementation AppDelegate
 
 @synthesize window = _window;
-@synthesize viewController = _viewController;
+@synthesize indicator;
+@synthesize navigationController = _navigationController;
+
++(AppDelegate*)appDelegate
+{
+    
+	return (AppDelegate*)[[UIApplication sharedApplication] delegate];
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+
     // Override point for customization after application launch.
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
-        self.viewController = [[ViewController alloc] initWithNibName:@"ViewController_iPhone" bundle:nil];
-    } else {
-        self.viewController = [[ViewController alloc] initWithNibName:@"ViewController_iPad" bundle:nil];
+        Splash_iphone *masterViewController = [[Splash_iphone alloc] initWithNibName:@"Splash_iphone" bundle:nil];
+        self.navigationController = [[UINavigationController alloc] initWithRootViewController:masterViewController];
+        self.window.rootViewController = self.navigationController;
+    } 
+    else {
+        Splash_ipad *masterViewController = [[[Splash_ipad alloc] initWithNibName:@"Splash_ipad" bundle:nil] autorelease];
+        self.navigationController = [[[UINavigationController alloc] initWithRootViewController:masterViewController] autorelease];
+        self.window.rootViewController = self.navigationController;
     }
-    self.window.rootViewController = self.viewController;
+    
+    indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+	
+	indicator.backgroundColor=[UIColor blackColor];
+    
+    [self createEditableCopyOfDatabaseIfNeeded];
     [self.window makeKeyAndVisible];
     return YES;
 }
+-(void)awakeFromNib{
+	[super awakeFromNib];
+    [self createEditableCopyOfDatabaseIfNeeded];
+    
+}
+
+
+- (void)createEditableCopyOfDatabaseIfNeeded {
+	
+	NSLog(@"Creating editable copy of 50 Most Popular Tourist Attractions In The World");
+	BOOL success;
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSError *error;
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documentsDirectory = [paths objectAtIndex:0];
+	NSString *writableDBPath = [documentsDirectory stringByAppendingPathComponent:@"50 Most Popular Tourist Attractions In The World"];
+	success = [fileManager fileExistsAtPath:writableDBPath];
+	if (success) return;
+	NSString *defaultDBPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"50 Most Popular Tourist Attractions In The World"];
+	success = [fileManager copyItemAtPath:defaultDBPath toPath:writableDBPath error:&error];
+	if (!success) {
+		NSAssert1(0, @"Failed to create writable 50 Most Popular Tourist Attractions In The World file with message '%@'.", [error localizedDescription]);
+	}
+}
+
+
+- (void)dealloc
+{
+    [_window release];
+    [_navigationController release];
+    [super dealloc];
+}
+
+
 
 - (void)applicationWillResignActive:(UIApplication *)application
 {
